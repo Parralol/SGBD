@@ -1,31 +1,3 @@
-DECLARE
-    course_courses_id INTEGER; -- Por ejemplo, asumiendo que la longitud m?xima de la cadena es de 100 caracteres
-BEGIN new_assignment_between_date(to_date( '2024-03-02','YYYY-MM-DD HH24:MI:SS'),to_date( '2024-04-02','YYYY-MM-DD HH24:MI:SS')); END;
-
-exec new_assignment_between_date(to_date( '2024-03-02','YYYY-MM-DD HH24:MI:SS'),to_date( '2024-04-02','YYYY-MM-DD HH24:MI:SS'));
-
-DECLARE
-    v_course_id INTEGER;
-BEGIN
-BEGIN new_assignment_between_date(to_date( '2024-03-02','YYYY-MM-DD HH24:MI:SS'), 'parcial'); END;
-    exec new_assignment_between_date(to_date( '2024-03-02','YYYY-MM-DD HH24:MI:SS'), 'parcial');
-    DBMS_OUTPUT.PUT_LINE('enrollment ID: ' || v_course_id);
-END;
-select count(*)
-delete
-                FROM assignments
-                where assignment_id > 600000;
-  commit;              
-                
-select (2885503-600000)/2 from dual;
-delete from assignments;
-
-SELECT * FROM ENROLLMENTS WHERE ENROLLMENT_ID = 83847
-SELECT * FROM ENROLLMENTS WHERE COURSE_ID = 629
-
-
-SET SERVEROUTPUT ON;
-
 create or replace NONEDITIONABLE PROCEDURE new_assignment_between_date (
             assignment_date			date,
             new_assignment_name varchar
@@ -139,11 +111,6 @@ create or replace NONEDITIONABLE PROCEDURE new_student (
         
         END; 
 
-BEGIN new_student('testeo10','testeo1@hola.com','+573042138633'); END;
-
-select * from students where student_name = 'testeo1'
-select count(*) from enrollments where enrollment_id > 60001
-select count(*) FROM assignments where assignment_id > 600000;
 --------------------------------------------------------------------------------------------------
 #Verificar un assignment al azar y ver si perdio la materia y si lo hizo crear un nuevo assignment y asignarselo.
 
@@ -274,12 +241,3 @@ create or replace NONEDITIONABLE PROCEDURE new_teacher_and_enrollment_course_and
         
         END; 
         
-BEGIN new_teacher_and_enrollment_course_and_students('andres','andres@gmail.com','+573107608877','gb'); END;
-select * from teachers where teacher_id =3001
-select * from courses where teacher_id =3001
-
-select * from enrollments where course_id = 1001
-
-select student_id from enrollments where course_id = (SELECT ROUND(DBMS_RANDOM.value(1, (select max(course_id) from courses))) FROM dual);
-
-SELECT student_id FROM enrollments WHERE course_id = (SELECT ROUND(DBMS_RANDOM.value(1, (SELECT MAX(course_id) FROM courses))) FROM dual);
