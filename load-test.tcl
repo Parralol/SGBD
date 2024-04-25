@@ -191,6 +191,16 @@ switch $myposition {
             return [MakeAlphaString $length_min $length_max $globArray $chalen]
         }
 
+        #random phone number
+        proc GenerateRandomPhoneNumbers { } {
+            return "+573[RandomNumber 0 9999][RandomNumber 0 9999]"
+        }
+
+        #Random email
+        proc GenerateRandomEmails { } {
+            return "[GenerateRandomString 4 10]@[GenerateRandomString 4 5].[GenerateRandomString 2 3]"
+        }
+
         #TIMESTAMP
         proc gettimestamp { } {
             set tstamp [ clock format [ clock seconds ] -format %Y%m%d%H%M%S ]
@@ -198,7 +208,6 @@ switch $myposition {
         }
 
 
-        #4 Se genera la aleatoriedad para el nuevo assignment
         #NEW assignment
         proc newassignment { curn_no RAISEERROR } {
             set new_name_assignment [GenerateRandomString 10 30]
@@ -211,140 +220,109 @@ switch $myposition {
                     ;
                 } } 
         }
-        #PAYMENT
-        proc payment { curn_py p_w_id w_id_input RAISEERROR } {
-            #2.5.1.1 The home warehouse id remains the same for each terminal
-            #2.5.1.1 select district id randomly from home warehouse where d_w_id = d_id
-            set p_d_id [ RandomNumber 1 10 ]
-            #2.5.1.2 customer selected 60% of time by name and 40% of time by number
-            set x [ RandomNumber 1 100 ]
-            set y [ RandomNumber 1 100 ]
-            if { $x <= 85 } {
-                set p_c_d_id $p_d_id
-                set p_c_w_id $p_w_id
-            } else {
-                #use a remote warehouse
-                set p_c_d_id [ RandomNumber 1 10 ]
-                set p_c_w_id [ RandomNumber 1 $w_id_input ]
-                while { ($p_c_w_id == $p_w_id) && ($w_id_input != 1) } {
-                    set p_c_w_id [ RandomNumber 1  $w_id_input ]
-                }
-            }
-            set nrnd [ NURand 255 0 999 123 ]
-            set name [ randname $nrnd ]
-            set p_c_id [ RandomNumber 1 3000 ]
-            if { $y <= 60 } {
-                #use customer name
-                #C_LAST is generated
-                set byname 1
-            } else {
-                #use customer number
-                set byname 0
-                set name {}
-            }
-            #2.5.1.3 random amount from 1 to 5000
-            set p_h_amount [ RandomNumber 1 5000 ]
-            #2.5.1.4 date selected from SUT
-            set h_date [ gettimestamp ]
-            #2.5.2.1 Payment Transaction
-            #change following to correct values
-            orabind $curn_py :p_w_id $p_w_id :p_d_id $p_d_id :p_c_w_id $p_c_w_id :p_c_d_id $p_c_d_id :p_c_id $p_c_id :byname $byname :p_h_amount $p_h_amount :p_c_last $name :p_w_street_1 {} :p_w_street_2 {} :p_w_city {} :p_w_state {} :p_w_zip {} :p_d_street_1 {} :p_d_street_2 {} :p_d_city {} :p_d_state {} :p_d_zip {} :p_c_first {} :p_c_middle {} :p_c_street_1 {} :p_c_street_2 {} :p_c_city {} :p_c_state {} :p_c_zip {} :p_c_phone {} :p_c_since {} :p_c_credit {0} :p_c_credit_lim {} :p_c_discount {} :p_c_balance {0} :p_c_data {} :timestamp $h_date
-            if {[ catch {oraexec $curn_py} message]} {
+        #new student enrollment to courses
+        proc newstudentenrollmenttocourses { curn_enco RAISEERROR } {
+            set new_student_name [GenerateRandomString 10 20]
+            set new_phone [GenerateRandomPhoneNumbers]
+            set new_email [GenerateRandomEmails]
+            orabind $curn_enco :student_name $new_student_name :email $new_email :phone $new_phone
+            if {[ catch {oraexec $curn_enco} message]} {
                 if { $RAISEERROR } {
-                    error "Payment : $message [ oramsg $curn_py all ]"
+                    error "new student : $message [ oramsg $curn_enco all ]"
                 } else {
                     ;
                 } } else {
-                orafetch  $curn_py -datavariable output
-                ;
-            }
-        }
-        #ORDER_STATUS
-        proc ostat { curn_os w_id RAISEERROR } {
-            #2.5.1.1 select district id randomly from home warehouse where d_w_id = d_id
-            set d_id [ RandomNumber 1 10 ]
-            set nrnd [ NURand 255 0 999 123 ]
-            set name [ randname $nrnd ]
-            set c_id [ RandomNumber 1 3000 ]
-            set y [ RandomNumber 1 100 ]
-            if { $y <= 60 } {
-                set byname 1
-            } else {
-                set byname 0
-                set name {}
-            }
-            orabind $curn_os :os_w_id $w_id :os_d_id $d_id :os_c_id $c_id :byname $byname :os_c_last $name :os_c_first {} :os_c_middle {} :os_c_balance {0} :os_o_id {} :os_entdate {} :os_o_carrier_id {}
-            if {[catch {oraexec $curn_os} message]} {
-                if { $RAISEERROR } {
-                    error "Order Status : $message [ oramsg $curn_os all ]"
-                } else {
-                    ;
-                } } else {
-                orafetch  $curn_os -datavariable output
-                ;
-            }
-        }
-        #DELIVERY
-        proc delivery { curn_dl w_id RAISEERROR } {
-            set carrier_id [ RandomNumber 1 10 ]
-            set date [ gettimestamp ]
-            orabind $curn_dl :d_w_id $w_id :d_o_carrier_id $carrier_id :timestamp $date
-            if {[ catch {oraexec $curn_dl} message ]} {
-                if { $RAISEERROR } {
-                    error "Delivery : $message [ oramsg $curn_dl all ]"
-                } else {
-                    ;
-                } } else {
-                orafetch  $curn_dl -datavariable output
-                ;
-            }
-        }
-        #STOCK LEVEL
-        proc slev { curn_sl w_id stock_level_d_id RAISEERROR } {
-            set threshold [ RandomNumber 10 20 ]
-            orabind $curn_sl :st_w_id $w_id :st_d_id $stock_level_d_id :THRESHOLD $threshold :stocklevel {} 
-            if {[catch {oraexec $curn_sl} message]} { 
-                if { $RAISEERROR } {
-                    error "Stock Level : $message [ oramsg $curn_sl all ]"
-                } else {
-                    ;
-                } } else {
-                orafetch  $curn_sl -datavariable output
+                orafetch  $curn_enco -datavariable output
                 ;
             }
         }
 
+
+        #extra homework
+        proc extra_homework { curn_eh  RAISEERROR } {
+            set new_name_assignment [GenerateRandomString 10 30]
+            set date_initial "2024-[RandomNumber 2 6]-[RandomNumber 1 28] [RandomNumber 0 23]:[RandomNumber 0 59]:[RandomNumber 0 59]"
+            orabind $curn_eh :date_initial $date_initial :name_assignment $new_name_assignment
+            if {[catch {oraexec $curn_eh} message]} {
+                if { $RAISEERROR } {
+                    error "extra homework : $message [ oramsg $curn_eh all ]"
+                } else {
+                    ;
+                } } 
+        }
+
+        # teacher_and_enrollment_course_and_students
+        proc teacher_and_enrollment_course_and_students { curn_te  RAISEERROR } {
+            set new_teacher_name [GenerateRandomString 10 30]
+            set new_phone [GenerateRandomPhoneNumbers]
+            set new_email [GenerateRandomEmails] 
+            set new_filter_student_name [GenerateRandomString 2 2]
+            orabind $curn_te :teacher_name $new_teacher_name :email $new_email :phone $new_phone :student_name_filter $new_filter_student_name
+            if {[catch {oraexec $curn_te} message]} {
+                if { $RAISEERROR } {
+                    error "teacher and enrollment : $message [ oramsg $curn_te all ]"
+                } else {
+                    ;
+                } } 
+        }
+
+        proc update_student_email_with_same_course {curn_sc curn_us RAISEERROR } {
+            set sql "SELECT student_id FROM enrollments WHERE course_id = (SELECT ROUND(DBMS_RANDOM.value(1, (SELECT MAX(course_id) FROM courses))) FROM dual)"
+            set students_ids [ standsql $curn_sc $sql ]
+            set maxIteration [llength $students_ids]
+            for {set i 1} {$i <= $maxIteration } {incr  i} {
+                set st_id [lindex $students_ids $i]
+                set new_email [GenerateRandomEmails] 
+                orabind $curn_us :email $new_email :student_id $st_id
+                if {[catch {oraexec $curn_us} message]} {
+                    if { $RAISEERROR } {
+                        error "update student : $message [ oramsg $curn_te all ]"
+                    } else {
+                    ;} 
+                } 
+            }
+            
+        }
+
         proc prep_statement { lda curn_st } {
             switch $curn_st {
-                curn_sl {
-                    set curn_sl [oraopen $lda ]
-                    set sql_sl "BEGIN slev(:st_w_id,:st_d_id,:threshold,:stocklevel); END;"
-                    oraparse $curn_sl $sql_sl
-                    return $curn_sl
+                new_teacher_and_enrollment_course_and_students {
+                    set curn_te [oraopen $lda ]
+                    set sql_os "BEGIN new_teacher_and_enrollment_course_and_students(:teacher_name,:email,:phone,:student_name_filter); END;"
+                    oraparse $curn_te $sql_os
+                    return $curn_te
                 }
-                curn_dl {
-                    set curn_dl [oraopen $lda ]
-                    set sql_dl "BEGIN delivery(:d_w_id,:d_o_carrier_id,TO_DATE(:timestamp,'YYYYMMDDHH24MISS')); END;"
-                    oraparse $curn_dl $sql_dl
-                    return $curn_dl
-                }
-                curn_os {
+                new_extra_homework {
                     set curn_os [oraopen $lda ]
-                    set sql_os "BEGIN ostat(:os_w_id,:os_d_id,:os_c_id,:byname,:os_c_last,:os_c_first,:os_c_middle,:os_c_balance,:os_o_id,:os_entdate,:os_o_carrier_id); END;"
+                    set sql_os "BEGIN extra_homework(to_date( :date_initial,'YYYY-MM-DD HH24:MI:SS'), :name_assignment); END;"
                     oraparse $curn_os $sql_os
                     return $curn_os
                 }
-                curn_py {
+                new_student_enrollment_to_courses {
                     set curn_py [oraopen $lda ]
-                    set sql_py "BEGIN payment(:p_w_id,:p_d_id,:p_c_w_id,:p_c_d_id,:p_c_id,:byname,:p_h_amount,:p_c_last,:p_w_street_1,:p_w_street_2,:p_w_city,:p_w_state,:p_w_zip,:p_d_street_1,:p_d_street_2,:p_d_city,:p_d_state,:p_d_zip,:p_c_first,:p_c_middle,:p_c_street_1,:p_c_street_2,:p_c_city,:p_c_state,:p_c_zip,:p_c_phone,:p_c_since,:p_c_credit,:p_c_credit_lim,:p_c_discount,:p_c_balance,:p_c_data,TO_DATE(:timestamp,'YYYYMMDDHH24MISS')); END;"
+                    set sql_py "BEGIN new_student(:student_name,:email,:phone); END;"
                     oraparse $curn_py $sql_py
                     return $curn_py
                 }
-                #1 Preparar el procedimiento para crear un nuevo assignment
                 curn_new_assignment {
                     set curn_no [oraopen $lda ]
-                    #exec (to_date( '2024-03-02','YYYY-MM-DD HH24:MI:SS'), 'parcial');
                     set sql_no "BEGIN new_assignment_between_date(to_date( :date_initial,'YYYY-MM-DD HH24:MI:SS'), :name_assignment); END;"
+                    oraparse $curn_no $sql_no
+                    return $curn_no
+                }
+                curn_new_assignment {
+                    set curn_no [oraopen $lda ]
+                    set sql_no "BEGIN new_assignment_between_date(to_date( :date_initial,'YYYY-MM-DD HH24:MI:SS'), :name_assignment); END;"
+                    oraparse $curn_no $sql_no
+                    return $curn_no
+                }
+                curn_to_select {
+                    set curn_no [oraopen $lda ]
+                    return $curn_no
+                }
+                curn_update_email_students {
+                    set curn_no [oraopen $lda ]
+                    set sql_no "UPDATE students SET email = :email WHERE student_id = :student_id "
                     oraparse $curn_no $sql_no
                     return $curn_no
                 }
@@ -352,8 +330,7 @@ switch $myposition {
         }
         #RUN TPC-C
         set lda [ OracleLogon $connect lda $timesten ]
-        #2 Poner el nuevo procedimiento en esta lista para prepararlo
-        foreach curn_st {curn_new_assignment curn_py curn_dl curn_sl curn_os} { set $curn_st [ prep_statement $lda $curn_st ] }
+        foreach curn_st {curn_new_assignment new_student_enrollment_to_courses new_extra_homework new_teacher_and_enrollment_course_and_students curn_to_select curn_update_email_students} { set $curn_st [ prep_statement $lda $curn_st ] }
         set curn1 [oraopen $lda ]
         set sql3 "BEGIN DBMS_RANDOM.initialize (val => TO_NUMBER(TO_CHAR(SYSDATE,'MMSS')) * (USERENV('SESSIONID') - TRUNC(USERENV('SESSIONID'),-5))); END;"
         oraparse $curn1 $sql3
@@ -364,42 +341,35 @@ switch $myposition {
         set abchk 1; set abchk_mx 1024; set hi_t [ expr {pow([ lindex [ time {if {  [ tsv::get application abort ]  } { break }} ] 0 ],2)}]
         for {set it 0} {$it < $total_iterations} {incr it} {
             if { [expr {$it % $abchk}] eq 0 } { if { [ time {if {  [ tsv::get application abort ]  } { break }} ] > $hi_t }  {  set  abchk [ expr {min(($abchk * 2), $abchk_mx)}]; set hi_t [ expr {$hi_t * 2} ] } }
-            set choice [ RandomNumber 1 10 ]
-            if {$choice <= 10} {
-                #3 Generar un numero al azar y hacer el procedimuent si cae en el rango
+            set choice [ RandomNumber 1 17 ]
+            if {$choice <= 3} {
                 if { $KEYANDTHINK } { keytime 18 }
-                #Crear nuevos Assignments
                 newassignment $curn_new_assignment $RAISEERROR
-                #Crear nuevos Profesores
-                #Crear nuevos Alumnos y vinculelos a 5 cursos aleatorios
-                #Update sobre los emails de los estudiantes del mismo curso
-                #Update assignment date dado un curso
-                #Verificar un assignment al azar y ver si perdio la materia y si lo hizo crear un nuevo assignment y asignarselo.
                 if { $KEYANDTHINK } { thinktime 12 }
-            } elseif {$choice <= 20} {
+            } elseif {$choice <= 8} {
                 if { $KEYANDTHINK } { keytime 3 }
-                BEGIN DBMS_RANDOM.initialize (val => TO_NUMBER(TO_CHAR(SYSDATE,'MMSS')) * (USERENV('SESSIONID') - TRUNC(USERENV('SESSIONID'),-5))); END; $curn_py $w_id $w_id_input $RAISEERROR
+                newstudentenrollmenttocourses $new_student_enrollment_to_courses $RAISEERROR
                 if { $KEYANDTHINK } { thinktime 12 }
-            } elseif {$choice <= 21} {
+            } elseif {$choice <= 11} {
                 if { $KEYANDTHINK } { keytime 2 }
-                puts puts "21"
+                extra_homework $new_extra_homework $RAISEERROR
                 if { $KEYANDTHINK } { thinktime 10 }
-            } elseif {$choice <= 22} {
+            } elseif {$choice <= 15} {
                 if { $KEYANDTHINK } { keytime 2 }
-                puts puts "22"
+                teacher_and_enrollment_course_and_students $new_teacher_and_enrollment_course_and_students $RAISEERROR
                 if { $KEYANDTHINK } { thinktime 5 }
-            } elseif {$choice <= 23} {
+            } elseif {$choice <= 17} {
                 if { $KEYANDTHINK } { keytime 2 }
-                puts puts "23"#ostat $curn_os $w_id $RAISEERROR
+                update_student_email_with_same_course $curn_to_select $curn_update_email_students $RAISEERROR
                 if { $KEYANDTHINK } { thinktime 5 }
             }
         }
-        #Paso 5 Cerrar los cursores
         oraclose $curn_new_assignment
-        oraclose $curn_py
-        oraclose $curn_dl
-        oraclose $curn_sl
-        oraclose $curn_os
+        oraclose $new_student_enrollment_to_courses
+        oraclose $new_extra_homework
+        oraclose $new_teacher_and_enrollment_course_and_students
+        oraclose $curn_to_select
+        oraclose $curn_update_email_students
         oralogoff $lda
     }
 }
