@@ -198,6 +198,7 @@ switch $myposition {
         }
 
 
+        #4 Se genera la aleatoriedad para el nuevo assignment
         #NEW assignment
         proc newassignment { curn_no RAISEERROR } {
             set new_name_assignment [GenerateRandomString 10 30]
@@ -339,6 +340,7 @@ switch $myposition {
                     oraparse $curn_py $sql_py
                     return $curn_py
                 }
+                #1 Preparar el procedimiento para crear un nuevo assignment
                 curn_new_assignment {
                     set curn_no [oraopen $lda ]
                     #exec (to_date( '2024-03-02','YYYY-MM-DD HH24:MI:SS'), 'parcial');
@@ -350,6 +352,7 @@ switch $myposition {
         }
         #RUN TPC-C
         set lda [ OracleLogon $connect lda $timesten ]
+        #2 Poner el nuevo procedimiento en esta lista para prepararlo
         foreach curn_st {curn_new_assignment curn_py curn_dl curn_sl curn_os} { set $curn_st [ prep_statement $lda $curn_st ] }
         set curn1 [oraopen $lda ]
         set sql3 "BEGIN DBMS_RANDOM.initialize (val => TO_NUMBER(TO_CHAR(SYSDATE,'MMSS')) * (USERENV('SESSIONID') - TRUNC(USERENV('SESSIONID'),-5))); END;"
@@ -363,8 +366,15 @@ switch $myposition {
             if { [expr {$it % $abchk}] eq 0 } { if { [ time {if {  [ tsv::get application abort ]  } { break }} ] > $hi_t }  {  set  abchk [ expr {min(($abchk * 2), $abchk_mx)}]; set hi_t [ expr {$hi_t * 2} ] } }
             set choice [ RandomNumber 1 10 ]
             if {$choice <= 10} {
+                #3 Generar un numero al azar y hacer el procedimuent si cae en el rango
                 if { $KEYANDTHINK } { keytime 18 }
+                #Crear nuevos Assignments
                 newassignment $curn_new_assignment $RAISEERROR
+                #Crear nuevos Profesores
+                #Crear nuevos Alumnos y vinculelos a 5 cursos aleatorios
+                #Update sobre los emails de los estudiantes del mismo curso
+                #Update assignment date dado un curso
+                #Verificar un assignment al azar y ver si perdio la materia y si lo hizo crear un nuevo assignment y asignarselo.
                 if { $KEYANDTHINK } { thinktime 12 }
             } elseif {$choice <= 20} {
                 if { $KEYANDTHINK } { keytime 3 }
@@ -384,6 +394,7 @@ switch $myposition {
                 if { $KEYANDTHINK } { thinktime 5 }
             }
         }
+        #Paso 5 Cerrar los cursores
         oraclose $curn_new_assignment
         oraclose $curn_py
         oraclose $curn_dl
