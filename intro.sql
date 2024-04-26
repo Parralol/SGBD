@@ -24,12 +24,10 @@ CREATE TABLE Students (
 CREATE TABLE Assignments (
     assignment_id INT PRIMARY KEY,
     assignment_name VARCHAR(255) NOT NULL,
-    course_id INT,
-    student_id INT,
+    enrollment_id INT,
     assignment_date DATE,
     grade FLOAT,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id),
-    FOREIGN KEY (student_id) REFERENCES Students(student_id)
+    FOREIGN KEY (Enrollment_id) REFERENCES Enrollments(enrollment_id)
 );
 
 CREATE TABLE Enrollments (
