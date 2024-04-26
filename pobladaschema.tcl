@@ -134,13 +134,14 @@ proc InsertAssignments { lda num_assignments num_enrrolments } {
     set curn [oraopen $lda ]
     set sql "INSERT INTO Assignments (assignment_id, assignment_name, enrollment_id, assignment_date, grade) VALUES (:assignment_id, :assignment_name, :enrollment_id, to_date( :assignment_date,'YYYY-MM-DD HH24:MI:SS'), ROUND(:grade, 2))"
     oraparse $curn $sql
+    set assignment_names [GenerateRandomStrings 10000 10 20]
     for {set i 1} {$i <= $num_assignments} {incr i} {
-        set assignment_names [lindex [GenerateRandomStrings 1 10 20] 0]
+        set i_assignment_name [lindex $assignment_names [RandomNumber 0 9999]]
         set enrollment_ids [ RandomNumber 1 $num_enrrolments ]
         set assignment_dates [ GenerateRandomDates ]
         set numero_aleatorio [expr {rand()}]
         set grades [expr {$numero_aleatorio * 5}]
-        orabind $curn  :assignment_id $i :assignment_name $assignment_names :enrollment_id $enrollment_ids :assignment_date $assignment_dates :grade $grades
+        orabind $curn  :assignment_id $i :assignment_name $i_assignment_name :enrollment_id $enrollment_ids :assignment_date $assignment_dates :grade $grades
         oraexec $curn
         oracommit $lda
         if { [expr {$i % 1000}] eq 0 } {
