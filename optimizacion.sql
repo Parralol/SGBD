@@ -1,13 +1,3 @@
--- indices
-
-CREATE INDEX idx_teacher_email ON Teachers(email);
-CREATE INDEX idx_course_teacher_id ON Courses(teacher_id);
-CREATE INDEX idx_student_email ON Students(email);
-CREATE INDEX idx_assignment_course_id ON Assignments(course_id);
-CREATE INDEX idx_assignment_student_id ON Assignments(student_id);
-CREATE INDEX idx_enrollment_student_id ON Enrollments(student_id);
-CREATE INDEX idx_enrollment_course_id ON Enrollments(course_id);
-
 --el tablespace se administra con monitoreo, no definicion previa
 --pool
 ALTER SYSTEM SET shared_pool_size = 1G;
@@ -25,10 +15,10 @@ ALTER DATABASE DROP LOGFILE GROUP 1;
 ALTER SYSTEM SET optimizer_mode = 'ALL_ROWS';
 EXEC DBMS_STATS.GATHER_DATABASE_STATS();
 
---tamaño de archivo de recuperacion
+--tamaÃ±o de archivo de recuperacion
 ALTER SYSTEM SET db_recovery_file_dest_size = '10G';
 
---rutina anual borrar logs antiguos de hace un año
+--rutina anual borrar logs antiguos de hace un aÃ±o
 
 CREATE OR REPLACE PROCEDURE eliminar_redo_logs_antiguos IS
 BEGIN
